@@ -1,10 +1,5 @@
 pipeline {
-  agent {
-    docker {
-      image 'thecodeguy/spring-boot-app:java17-v2'
-      args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
-    }
-  }
+  agent any
 
   environment {
     SONAR_URL = "http://34.192.31.132:9000"
@@ -13,11 +8,15 @@ pipeline {
     GIT_USER_NAME = "Sohailmd623"
   }
 
+  triggers {
+    githubPush() // Enables webhook trigger
+  }
+
   stages {
     stage('Checkout') {
       steps {
         echo "Code checkout simulated"
-        // git branch: 'main', url: 'https://github.com/iam-veeramalla/Jenkins-Zero-To-Hero.git'
+        // git branch: 'main', url: 'https://github.com/Sohailmd623/devsecops-cicd.git'
       }
     }
 
@@ -25,8 +24,10 @@ pipeline {
       steps {
         sh '''
           cd spring-boot-app
-          echo "Fixing permissions in target directory if it exists"
-          [ -d target ] && find target -type f -exec chmod u+w {} \; || true
+          echo "Fixing target directory permissions"
+          if [ -d target ]; then
+            find target -type f -exec chmod u+w {} \\; || true
+          fi
           rm -rf target || true
           mvn clean package
         '''
@@ -78,14 +79,6 @@ pipeline {
             git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
           '''
         }
-      }
-    }
-  }
-
-  post {
-    always {
-      node {
-        cleanWs()
       }
     }
   }
