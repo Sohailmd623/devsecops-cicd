@@ -21,16 +21,17 @@ pipeline {
     }
 
     stage('Build and Test') {
-      steps {
-        sh '''
-          echo "[INFO] Building inside Docker container..."
-          docker run --rm -u root \
-            -v $(pwd):/app -w /app/spring-boot-app \
-            thecodeguy/spring-boot-app:java17-v2 \
-            sh -c "chmod -R u+w target || true && rm -rf target || true && mvn clean package"
-        '''
-      }
-    }
+  steps {
+    sh '''
+      echo "[INFO] Building inside Docker container..."
+      docker run --rm -u root \
+        -v $(pwd):/app -w /app/spring-boot-app \
+        thecodeguy/spring-boot-app:java17-v2 \
+        sh -c "chmod -R u+w target || true && rm -rf target || true && mvn clean package"
+    '''
+  }
+}
+
 
     stage('Java Version') {
       steps {
