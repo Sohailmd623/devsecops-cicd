@@ -22,21 +22,13 @@ pipeline {
 
     stage('Build and Test') {
       steps {
-        script {
-          docker.image('thecodeguy/spring-boot-app:java17-v2').inside('-u root') {
-            sh '''
-              cd spring-boot-app
-
-              echo "Fixing permissions on target/ if exists..."
-              if [ -d target ]; then
-                chmod -R u+w target || true
-                rm -rf target || true
-              fi
-
-              mvn clean package
-            '''
-          }
-        }
+        sh '''
+          echo "[INFO] Building inside Docker container..."
+          docker run --rm -u root \
+            -v $(pwd):/app -w /app/spring-boot-app \
+            thecodeguy/spring-boot-app:java17-v2 \
+            sh -c "chmod -R u+w target || true && rm -rf target || true && mvn clean package"
+        '''
       }
     }
 
@@ -49,16 +41,12 @@ pipeline {
     stage('Static Code Analysis') {
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-          script {
-            docker.image('thecodeguy/spring-boot-app:java17-v2').inside('-u root') {
-              sh '''
-                cd spring-boot-app
-                mvn sonar:sonar \
-                  -Dsonar.login=$SONAR_AUTH_TOKEN \
-                  -Dsonar.host.url=${SONAR_URL}
-              '''
-            }
-          }
+          sh '''
+            docker run --rm -u root \
+              -v $(pwd):/app -w /app/spring-boot-app \
+              thecodeguy/spring-boot-app:java17-v2 \
+              sh -c "mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}"
+          '''
         }
       }
     }
