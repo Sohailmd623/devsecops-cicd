@@ -64,18 +64,30 @@ pipeline {
     }
 
     stage('Update Deployment File') {
-      steps {
-        withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
-          sh '''
-            git config user.email "sohailmd1920@gmail.com"
-            git config user.name "MD Sohail"
-            sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
-            git add spring-boot-app-manifests/deployment.yml
-            git commit -m "Update deployment image to version ${BUILD_NUMBER}"
-            git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} HEAD:main
-          '''
+  steps {
+    withCredentials([string(credentialsId: 'github', variable: 'GITHUB_TOKEN')]) {
+      sh '''
+        echo "[INFO] Configuring Git user"
+        git config user.email "sohailmd1920@gmail.com"
+        git config user.name "MD Sohail"
+
+        echo "[INFO] Checking out main branch"
+        git checkout main
+
+        echo "[INFO] Updating image tag in deployment file"
+        sed -i "s/replaceImageTag/${BUILD_NUMBER}/g" spring-boot-app-manifests/deployment.yml
+
+        echo "[INFO] Adding and committing changes"
+        git add spring-boot-app-manifests/deployment.yml
+
+        # Only commit if there are actual changes
+        git diff --cached --quiet || git commit -m "Update deployment image to version ${BUILD_NUMBER}"
+
+        echo "[INFO] Pushing to GitHub"
+        git push https://${GITHUB_TOKEN}@github.com/${GIT_USER_NAME}/${GIT_REPO_NAME} main
+      '''
         }
       }
     }
-  }
+ }
 }
