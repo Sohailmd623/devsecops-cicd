@@ -13,41 +13,44 @@ pipeline {
   }
 
   stages {
+
     stage('Checkout') {
       steps {
         echo "Simulating Git checkout..."
+        // Uncomment if real Git checkout is needed
         // git branch: 'main', url: 'https://github.com/Sohailmd623/devsecops-cicd.git'
       }
     }
 
     stage('Build and Test') {
-  steps {
-    sh '''
-      echo "[INFO] Building inside Docker container..."
-      docker run --rm --entrypoint sh -u root \
-        -v $(pwd):/app -w /app/spring-boot-app \
-        thecodeguy/spring-boot-app:java17-v2 \
-        -c "chmod -R u+w target || true && rm -rf target || true && mvn clean package"
-    '''
-  }
-}
-
+      steps {
+        echo "[INFO] Building with Maven Docker container..."
+        sh '''
+          docker run --rm --entrypoint sh -u root \
+            -v $(pwd):/app -w /app/spring-boot-app \
+            maven:3.9.6-eclipse-temurin-17 \
+            -c "chmod -R u+w target || true && rm -rf target || true && mvn clean package"
+        '''
+      }
+    }
 
     stage('Java Version') {
       steps {
-        sh 'java -version && javac -version'
+        sh 'java -version && javac -version || true'
       }
     }
 
     stage('Static Code Analysis') {
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-          sh '''
+          sh """
             docker run --rm -u root \
-              -v $(pwd):/app -w /app/spring-boot-app \
-              thecodeguy/spring-boot-app:java17-v2 \
-              sh -c "mvn sonar:sonar -Dsonar.login=$SONAR_AUTH_TOKEN -Dsonar.host.url=${SONAR_URL}"
-          '''
+              -v \$(pwd):/app -w /app/spring-boot-app \
+              maven:3.9.6-eclipse-temurin-17 \
+              mvn sonar:sonar \
+              -Dsonar.login=$SONAR_AUTH_TOKEN \
+              -Dsonar.host.url=$SONAR_URL
+          """
         }
       }
     }
