@@ -9,28 +9,34 @@ pipeline {
   }
 
   triggers {
-    githubPush() // Enables webhook trigger
+    githubPush()
   }
 
   stages {
     stage('Checkout') {
       steps {
-        echo "Code checkout simulated"
+        echo "Simulating Git checkout..."
         // git branch: 'main', url: 'https://github.com/Sohailmd623/devsecops-cicd.git'
       }
     }
 
     stage('Build and Test') {
       steps {
-        sh '''
-          cd spring-boot-app
-          echo "Fixing target directory permissions"
-          if [ -d target ]; then
-            find target -type f -exec chmod u+w {} \\; || true
-          fi
-          rm -rf target || true
-          mvn clean package
-        '''
+        script {
+          docker.image('thecodeguy/spring-boot-app:java17-v2').inside('-u root') {
+            sh '''
+              cd spring-boot-app
+
+              echo "Fixing permissions on target/ if exists..."
+              if [ -d target ]; then
+                chmod -R u+w target || true
+                rm -rf target || true
+              fi
+
+              mvn clean package
+            '''
+          }
+        }
       }
     }
 
@@ -43,12 +49,16 @@ pipeline {
     stage('Static Code Analysis') {
       steps {
         withCredentials([string(credentialsId: 'sonarqube', variable: 'SONAR_AUTH_TOKEN')]) {
-          sh '''
-            cd spring-boot-app
-            mvn sonar:sonar \
-              -Dsonar.login=$SONAR_AUTH_TOKEN \
-              -Dsonar.host.url=${SONAR_URL}
-          '''
+          script {
+            docker.image('thecodeguy/spring-boot-app:java17-v2').inside('-u root') {
+              sh '''
+                cd spring-boot-app
+                mvn sonar:sonar \
+                  -Dsonar.login=$SONAR_AUTH_TOKEN \
+                  -Dsonar.host.url=${SONAR_URL}
+              '''
+            }
+          }
         }
       }
     }
