@@ -4,7 +4,7 @@ pipeline {
   environment {
     SONAR_URL = "http://34.192.31.132:9000"
     DOCKER_IMAGE = "thecodeguy/spring-boot-app:${BUILD_NUMBER}"
-    GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
+    GIT_REPO_NAME = "devsecops-cicd"
     GIT_USER_NAME = "Sohailmd623"
   }
   stages {
