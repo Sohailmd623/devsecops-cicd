@@ -24,10 +24,10 @@ pipeline {
   steps {
     sh '''
       echo "[INFO] Building inside Docker container..."
-      docker run --rm -u root \
+      docker run --rm --entrypoint sh -u root \
         -v $(pwd):/app -w /app/spring-boot-app \
         thecodeguy/spring-boot-app:java17-v2 \
-        sh -c "chmod -R u+w target || true && rm -rf target || true && mvn clean package"
+        -c "chmod -R u+w target || true && rm -rf target || true && mvn clean package"
     '''
   }
 }
