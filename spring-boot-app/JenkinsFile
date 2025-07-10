@@ -7,11 +7,6 @@ pipeline {
     GIT_REPO_NAME = "Jenkins-Zero-To-Hero"
     GIT_USER_NAME = "Sohailmd623"
   }
-
-  triggers {
-    githubPush()
-  }
-
   stages {
 
     stage('Checkout') {
