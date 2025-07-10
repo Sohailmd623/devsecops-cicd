@@ -20,10 +20,10 @@ pipeline {
     stage('Build and Test') {
       steps {
         sh '''
-          ls -ltr
-          cd spring-boot-app
-          mvn clean package
-        '''
+            cd spring-boot-app
+            rm -rf target || true
+            mvn clean package
+          '''
       }
     }
 
