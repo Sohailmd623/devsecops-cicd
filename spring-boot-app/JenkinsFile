@@ -18,24 +18,22 @@ pipeline {
     }
 
     stage('Build and Test') {
-      steps {
-        sh '''
-          cd spring-boot-app
+  steps {
+    sh '''
+      cd spring-boot-app
 
-          # Fix permission issues on target dir if exists
-          if [ -d target ]; then
-            echo "Fixing permissions in target directory"
-            find target -type f -exec chmod u+w {} \; || true
-          fi
+      # Fix permission issues on target dir if exists
+      if [ -d target ]; then
+        echo "Fixing permissions in target directory"
+        find target -type f -exec chmod u+w {} \\; || true
+      fi
 
-          # Clean up any old target files (ignore errors)
-          rm -rf target || true
+      rm -rf target || true
+      mvn clean package
+    '''
+  }
+}
 
-          # Now run the Maven build
-          mvn clean package
-        '''
-      }
-    }
 
     stage('Java Version') {
       steps {
