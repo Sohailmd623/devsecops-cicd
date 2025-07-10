@@ -2,7 +2,7 @@ pipeline {
   agent {
     docker {
       image 'thecodeguy/spring-boot-app:java17-v2'
-      args '-u root' // ensure the pipeline runs as root inside the container
+      args '-u root -v /var/run/docker.sock:/var/run/docker.sock'
     }
   }
 
@@ -14,7 +14,6 @@ pipeline {
   }
 
   stages {
-
     stage('Checkout') {
       steps {
         echo "Code checkout simulated"
@@ -26,16 +25,9 @@ pipeline {
       steps {
         sh '''
           cd spring-boot-app
-
-          # Fix permissions and delete target directory if exists
-          if [ -d target ]; then
-            echo "Fixing permissions in target directory"
-            chown -R root:root target || true
-            chmod -R u+w target || true
-            rm -rf target || true
-          fi
-
-          # Build with Maven
+          echo "Fixing permissions in target directory if it exists"
+          [ -d target ] && find target -type f -exec chmod u+w {} \; || true
+          rm -rf target || true
           mvn clean package
         '''
       }
@@ -88,12 +80,13 @@ pipeline {
         }
       }
     }
-
   }
 
   post {
     always {
-      cleanWs()
+      node {
+        cleanWs()
+      }
     }
   }
 }
